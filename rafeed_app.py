@@ -1,4 +1,6 @@
 import streamlit as st
+from datetime import date, datetime
+import os
 
 # Streamlit page config
 st.set_page_config(page_title="Rafeed Tracker", page_icon="💬", layout="centered")
@@ -10,11 +12,6 @@ password = st.sidebar.text_input("Enter password to access", type="password")
 if password != PASSWORD:
     st.warning("⚠️ Please enter the correct password to continue.")
     st.stop()
-
-
-import streamlit as st
-from datetime import date, datetime
-import os
 
 # File to store last texted date
 DATA_FILE = "last_texted.txt"
@@ -47,15 +44,13 @@ elif 4 <= days_since <= 5:
 else:
     avatar = "😢"
 
-# Custom CSS styling with fixed Eid card
+# Custom CSS styling
 st.markdown("""
     <style>
-    /* Background gradient for the whole page */
     body {
         background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    /* Center the main content with a nice card */
     .main > div {
         background: rgba(255, 255, 255, 0.9);
         border-radius: 25px;
@@ -64,8 +59,6 @@ st.markdown("""
         max-width: 600px;
         margin: 50px auto;
     }
-
-    /* Counter box styling */
     .counter-box {
         display: flex;
         align-items: center;
@@ -97,8 +90,6 @@ st.markdown("""
         margin-bottom: 30px;
         letter-spacing: 1.1px;
     }
-
-    /* Mood emoji bigger & centered */
     div[style*="font-size: 80px;"] {
         font-size: 140px !important;
         margin-bottom: 40px;
@@ -106,12 +97,11 @@ st.markdown("""
         filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.15));
         user-select: none;
     }
-
-    /* Emoji buttons container */
     .emoji-container {
         display: flex;
         justify-content: center;
-        gap: 120px;
+        gap: 100px;
+        flex-wrap: wrap;
         margin-top: 20px;
     }
     .emoji-wrapper {
@@ -126,8 +116,6 @@ st.markdown("""
         transform: scale(1.3);
         filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.15));
     }
-
-    /* Buttons styling */
     button.stButton > button {
         font-size: 110px !important;
         background: none !important;
@@ -140,8 +128,6 @@ st.markdown("""
     button.stButton > button:hover {
         transform: scale(1.3) !important;
     }
-
-    /* Tooltip styling */
     .tooltip {
         visibility: hidden;
         background-color: #023e8a;
@@ -166,8 +152,6 @@ st.markdown("""
         visibility: visible;
         opacity: 1;
     }
-
-    /* Slap text styling */
     .slap-text {
         font-size: 26px;
         font-weight: 700;
@@ -178,42 +162,37 @@ st.markdown("""
         user-select: none;
         text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
     }
-
-    /* Fixed Eid Mubarak card on top-left */
     .eid-card {
         position: fixed;
         top: 20px;
         left: 20px;
-        background: #90caf9;  /* Light blue */
+        background: #90caf9;
         border-radius: 15px;
         box-shadow: 0 5px 15px rgba(0,0,0,0.25);
-        width: 240px;  /* Increased width */
+        width: 240px;
         user-select: none;
         font-weight: 800;
-        color: #0d47a1;  /* Dark blue text */
+        color: #0d47a1;
         cursor: pointer;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         transition: background 0.3s ease;
         z-index: 9999;
     }
-
     .eid-card:hover {
-        background: #64b5f6;  /* Slightly darker on hover */
+        background: #64b5f6;
     }
-    
     .eid-card summary {
         list-style: none;
         padding: 12px 20px;
-        font-size: 20px; /* Bigger font for visibility */
+        font-size: 20px;
         border-radius: 15px;
         outline: none;
-        display: block;         /* Make summary block to use full width */
-        white-space: nowrap;    /* Prevent text wrapping */
+        display: block;
+        white-space: nowrap;
         user-select: none;
     }
-
     .eid-card[open] {
-        width: 280px;  /* Wider when open */
+        width: 280px;
     }
     .eid-content {
         padding: 15px 20px 25px 20px;
@@ -223,7 +202,6 @@ st.markdown("""
         user-select: text;
         text-align: center;
     }
-    /* Remove default disclosure arrow */
     .eid-card summary::-webkit-details-marker {
         display: none;
     }
@@ -233,7 +211,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Eid Mubarak card on top-left using <details>
+# Eid card
 st.markdown("""
 <details class="eid-card" role="region" aria-label="Eid Mubarak Card">
   <summary>EID MUBARAK 🎉</summary>
@@ -241,7 +219,7 @@ st.markdown("""
 </details>
 """, unsafe_allow_html=True)
 
-# Display main counter and mood
+# Mood display
 st.markdown(f"""
 <div class="counter-box">
     <div class="calendar-icon">📅</div>
@@ -251,18 +229,19 @@ st.markdown(f"""
 <div style="font-size: 80px; text-align: center;">{avatar}</div>
 """, unsafe_allow_html=True)
 
-# Show emoji buttons
-st.markdown('<div class="emoji-container">', unsafe_allow_html=True)
-
-# Flags to control GIF rendering
+# Control flags
 show_cheers = False
 show_slap = False
+show_reset = False
 
-col1, col2 = st.columns(2)
+# Emoji buttons
+st.markdown('<div class="emoji-container">', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown('<div class="emoji-wrapper"><div class="tooltip">She texted!</div>', unsafe_allow_html=True)
-    if st.button("🐶", key="she_texted", help="She texted!", use_container_width=True):
+    st.markdown('<div class="emoji-wrapper"><div class="tooltip">I will text</div>', unsafe_allow_html=True)
+    if st.button("🐶", key="she_texted", help="I will text", use_container_width=True):
         with open(DATA_FILE, "w") as f:
             f.write(str(today))
         show_cheers = True
@@ -274,9 +253,17 @@ with col2:
         show_slap = True
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('</div>', unsafe_allow_html=True)  # close .emoji-container
+with col3:
+    st.markdown('<div class="emoji-wrapper"><div class="tooltip">Reset to June 3</div>', unsafe_allow_html=True)
+    if st.button("😾", key="reset", help="Back to square one", use_container_width=True):
+        with open(DATA_FILE, "w") as f:
+            f.write(str(DEFAULT_DATE))
+        show_reset = True
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Render gifs based on which button was clicked
+st.markdown('</div>', unsafe_allow_html=True)  # Close emoji-container
+
+# Display feedback
 if show_cheers:
     if os.path.exists("cheers.gif"):
         with open("cheers.gif", "rb") as f:
@@ -291,6 +278,19 @@ if show_slap:
         with open("slap.gif", "rb") as f:
             gif_bytes = f.read()
         st.image(gif_bytes, use_container_width=True)
-        st.markdown('<div class="slap-text">That\'s what you get Rafeed for misbehaving!</div>', unsafe_allow_html=True)
+        st.markdown('<div class="slap-text">That\'s what you get Rafeed for misbehaving!😠</div>', unsafe_allow_html=True)
     else:
         st.error("slap.gif not found.")
+
+if show_reset:
+    if os.path.exists("cry.gif"):
+        with open("cry.gif", "rb") as f:
+            gif_bytes = f.read()
+        st.image(gif_bytes, use_container_width=True)
+    else:
+        st.error("cry.gif not found.")
+    
+    st.markdown(
+        '<div class="slap-text" style="color: #e76f51;">No I still won\'t text. Keep counting! 😑</div>',
+        unsafe_allow_html=True
+    )
